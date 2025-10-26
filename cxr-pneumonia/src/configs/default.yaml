@@ -1,0 +1,35 @@
+# Data
+data:
+  # Option A: CSV files with columns path,label
+  train_csv: null  # e.g., data/processed/train.csv
+  val_csv: null    # e.g., data/processed/val.csv
+  test_csv: null   # e.g., data/processed/test.csv
+
+  # Option B: folder with normal/ and pneumonia/ subfolders
+  image_root: null # e.g., data/processed/images
+
+  image_size: 224
+
+# Model
+model:
+  name: resnet18   # resnet18 | resnet34 | efficientnet_b0
+  pretrained: true
+
+# Loss
+loss:
+  name: bce        # bce | focal
+  params: {}
+
+# Train
+train:
+  batch_size: 32
+  num_workers: 4
+  lr: 0.0003
+  weight_decay: 0.0001
+  epochs: 5
+  scheduler: cosine
+  aug: light       # none | light | medium
+
+# Misc
+seed: 42
+output_dir: experiments

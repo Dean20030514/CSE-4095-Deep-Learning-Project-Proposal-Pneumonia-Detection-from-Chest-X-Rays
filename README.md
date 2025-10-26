@@ -1,1 +1,0 @@
-# CSE-4095-Deep-Learning-Project-Proposal-Pneumonia-Detection-from-Chest-X-Rays
