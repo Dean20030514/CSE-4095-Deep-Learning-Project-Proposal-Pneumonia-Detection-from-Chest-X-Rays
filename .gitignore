@@ -29,6 +29,9 @@ cxr-pneumonia/data/external/
 cxr-pneumonia/experiments/
 **/__MACOSX/
 
+# Archives and large binaries
+*.zip
+
 # Logs
 *.log
 logs/
