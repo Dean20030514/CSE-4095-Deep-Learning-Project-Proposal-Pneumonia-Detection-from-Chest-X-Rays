@@ -49,6 +49,30 @@ You can use either CSV files listing images and labels or a folder with two subf
 
 Update paths in `src/configs/default.yaml` accordingly.
 
+### Datasets (not in Git)
+
+This repository does not version datasets. Place data locally under `cxr-pneumonia/data/`, which is ignored by Git:
+
+- `cxr-pneumonia/data/raw/` — original datasets (read-only)
+- `cxr-pneumonia/data/processed/` — preprocessed files (generated)
+
+For example, if you use Kaggle "Chest X-Ray Images (Pneumonia)", unpack it so that you get:
+
+```
+cxr-pneumonia/data/raw/chest_xray/
+├─ train/
+│  ├─ NORMAL/*.jpeg
+│  └─ PNEUMONIA/*.jpeg
+├─ val/
+│  ├─ NORMAL/*.jpeg
+│  └─ PNEUMONIA/*.jpeg
+└─ test/
+  ├─ NORMAL/*.jpeg
+  └─ PNEUMONIA/*.jpeg
+```
+
+Then point the config or CLI flags to the proper paths (see `src/configs/default.yaml`).
+
 ## Train
 
 ```bash
