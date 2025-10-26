@@ -204,33 +204,33 @@ def main():
     # write markdown
     md_path = out_dir / "data_overview.md"
     with md_path.open("w", encoding="utf-8") as f:
-        f.write("# 数据概览\n\n")
-        f.write(f"- 总图像数: {rep.get('total_images', 0)}\n")
+        f.write("# Data Overview\n\n")
+        f.write(f"- Total images: {rep.get('total_images', 0)}\n")
         if class_counts:
-            f.write("- 各类样本数: " + ", ".join(f"{k}: {v}" for k, v in sorted(class_counts.items())) + "\n")
+            f.write("- Class counts: " + ", ".join(f"{k}: {v}" for k, v in sorted(class_counts.items())) + "\n")
         size_sum = rep.get("size_summary", {})
         if size_sum:
             f.write(
-                f"- 宽度范围: {size_sum.get('min_width')} - {size_sum.get('max_width')}, "
-                f"高度范围: {size_sum.get('min_height')} - {size_sum.get('max_height')}\n\n"
+                f"- Width range: {size_sum.get('min_width')} - {size_sum.get('max_width')}, "
+                f"Height range: {size_sum.get('min_height')} - {size_sum.get('max_height')}\n\n"
             )
 
         # class chart
-        f.write("## 类别分布\n\n")
+        f.write("## Class Distribution\n\n")
         f.write(f"![Class Counts](images/{class_counts_path.name})\n\n")
 
         # channel chart
-        f.write("## 通道统计\n\n")
+        f.write("## Channel Summary\n\n")
         f.write(f"![Channel Summary](images/{channel_counts_path.name})\n\n")
 
         # top sizes
         if size_dist:
-            f.write("## 尺寸分布（Top）\n\n")
+            f.write("## Top Image Sizes\n\n")
             f.write(f"![Top Sizes](images/{top_sizes_path.name})\n\n")
 
         # samples
         if sample_images_paths:
-            f.write("## 示例可视化\n\n")
+            f.write("## Sample Visualizations\n\n")
             for split in split_names:
                 if split in sample_images_paths:
                     rel = sample_images_paths[split].name

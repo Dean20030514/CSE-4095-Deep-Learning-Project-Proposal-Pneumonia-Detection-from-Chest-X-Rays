@@ -1,22 +1,22 @@
-# 数据概览
+# Data Overview
 
-- 总图像数: 17568
-- 各类样本数: NORMAL: 4749, PNEUMONIA: 12819
-- 宽度范围: 384 - 2916, 高度范围: 127 - 2713
+- Total images: 17568
+- Class counts: NORMAL: 4749, PNEUMONIA: 12819
+- Width range: 384 - 2916, Height range: 127 - 2713
 
-## 类别分布
+## Class Distribution
 
 ![Class Counts](images/class_counts.png)
 
-## 通道统计
+## Channel Summary
 
 ![Channel Summary](images/channel_counts.png)
 
-## 尺寸分布（Top）
+## Top Image Sizes
 
 ![Top Sizes](images/top_sizes.png)
 
-## 示例可视化
+## Sample Visualizations
 
 ### Train
 

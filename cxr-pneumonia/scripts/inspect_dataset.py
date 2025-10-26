@@ -172,43 +172,43 @@ def build_report(records: List[ImageRecord], corrupted: List[Path]) -> Report:
 
 
 def print_report(rep: Report) -> None:
-    print("\n==== 数据集统计 (Dataset Report) ====")
-    print(f"总图像数: {rep.total_images}")
+    print("\n==== Dataset Report ====")
+    print(f"Total images: {rep.total_images}")
 
-    print("\n各类样本数:")
+    print("\nClass counts:")
     for k, v in sorted(rep.classes.items()):
         print(f"  {k}: {v}")
 
     if rep.splits:
-        print("\n数据集划分（按 split x 类别）:")
+        print("\nSplit x Class counts:")
         for sp, d in rep.splits.items():
             d_sorted = dict(sorted(d.items()))
             print(f"  {sp}: {d_sorted}")
 
-    print("\n图像尺寸摘要:")
+    print("\nImage size summary:")
     s = rep.size_summary
-    print(f"  宽度范围: {s['min_width']} - {s['max_width']}")
-    print(f"  高度范围: {s['min_height']} - {s['max_height']}")
+    print(f"  Width range: {s['min_width']} - {s['max_width']}")
+    print(f"  Height range: {s['min_height']} - {s['max_height']}")
     if s["top_sizes"]:
-        print("  最常见尺寸:")
+        print("  Most frequent sizes:")
         for item in s["top_sizes"]:
             print(f"    {item['size']}: {item['count']}")
 
-    print("\n通道/模式统计:")
+    print("\nChannel/mode summary:")
     if rep.channel_summary:
-        print(f"  灰度(grayscale): {rep.channel_summary.get('grayscale', 0)}")
+        print(f"  Grayscale: {rep.channel_summary.get('grayscale', 0)}")
         print(f"  RGB: {rep.channel_summary.get('rgb', 0)}")
         print(f"  RGBA: {rep.channel_summary.get('rgba', 0)}")
-        print(f"  其他(other): {rep.channel_summary.get('other', 0)}")
+        print(f"  Other: {rep.channel_summary.get('other', 0)}")
     if rep.mode_counts:
-        print("  原始 Pillow 模式:")
+        print("  Raw Pillow modes:")
         for k, v in sorted(rep.mode_counts.items(), key=lambda x: (-x[1], x[0])):
             print(f"    {k}: {v}")
 
-    print("\n损坏/不可读文件:")
-    print(f"  数量: {rep.corrupted_count}")
+    print("\nCorrupted/unreadable files:")
+    print(f"  Count: {rep.corrupted_count}")
     if rep.corrupted_examples:
-        print("  示例(最多 20 条):")
+        print("  Examples (up to 20):")
         for p in rep.corrupted_examples:
             print(f"    {p}")
     print("===================================\n")
@@ -237,7 +237,7 @@ def main() -> int:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w", encoding="utf-8") as f:
         json.dump(asdict(rep), f, ensure_ascii=False, indent=2)
-    print(f"报告已保存: {out_path.resolve()}")
+    print(f"Report saved: {out_path.resolve()}")
     return 0
 
 
