@@ -1,0 +1,46 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments & local env files
+.venv/
+venv/
+.env
+.env.*
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data directories (keep structure only)
+data/**
+!data/.gitkeep
+!data/raw/
+!data/raw/.gitkeep
+!data/processed/
+!data/processed/.gitkeep
+!data/external/
+!data/external/.gitkeep
+
+# Experiments, logs, artifacts
+experiments/**
+!experiments/.gitkeep
+runs/
+checkpoints/
+logs/
+
+# Model weights / artifacts
+*.pt
+*.pth
+*.ckpt
+
+# Streamlit
+.streamlit/
+
+# Editor/OS files
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Docker/other
+*.pid
