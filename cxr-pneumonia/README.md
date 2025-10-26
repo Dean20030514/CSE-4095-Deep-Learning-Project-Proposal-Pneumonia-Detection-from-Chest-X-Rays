@@ -6,7 +6,7 @@ A compact PyTorch project for pneumonia detection from chest X-rays. It includes
 
 ## Structure
 
-```
+```text
 cxr-pneumonia/
 ├─ data/
 │  ├─ raw/                # raw data (read-only)
@@ -58,7 +58,7 @@ This repository does not version datasets. Place data locally under `cxr-pneumon
 
 For example, if you use Kaggle "Chest X-Ray Images (Pneumonia)", unpack it so that you get:
 
-```
+```text
 cxr-pneumonia/data/raw/chest_xray/
 ├─ train/
 │  ├─ NORMAL/*.jpeg
@@ -72,6 +72,34 @@ cxr-pneumonia/data/raw/chest_xray/
 ```
 
 Then point the config or CLI flags to the proper paths (see `src/configs/default.yaml`).
+
+### Download from Kaggle (Windows PowerShell)
+
+If you prefer to download automatically via Kaggle API (requires a Kaggle account):
+
+1) Create API token on Kaggle: Account settings → "Create New Token". This downloads `kaggle.json`.
+2) Place the file at `%USERPROFILE%\.kaggle\kaggle.json` and ensure permissions are user-only.
+3) Install the CLI and download/unzip into `data/raw/`:
+
+```powershell
+pip install kaggle ; `
+mkdir -Force cxr-pneumonia\data\raw ; `
+cd cxr-pneumonia\data\raw ; `
+kaggle datasets download -d paultimothymooney/chest-xray-pneumonia -f chest_xray.zip -p . ; `
+tar -xf chest_xray.zip ; `
+del chest_xray.zip
+```
+
+You should end up with the structure:
+
+```text
+cxr-pneumonia/data/raw/chest_xray/
+├─ train/NORMAL, train/PNEUMONIA
+├─ val/NORMAL,   val/PNEUMONIA
+└─ test/NORMAL,  test/PNEUMONIA
+```
+
+Now you can proceed with the quick EDA and split steps below.
 
 ## Train
 
