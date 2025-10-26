@@ -8,7 +8,7 @@ data:
   # Option B: folder with normal/ and pneumonia/ subfolders
   image_root: null # e.g., data/processed/images
 
-  image_size: 224
+  image_size: 448
 
 # Model
 model:
@@ -17,8 +17,9 @@ model:
 
 # Loss
 loss:
-  name: bce        # bce | focal
-  params: {}
+  name: focal      # bce | focal
+  params:
+    gamma: 2.0
 
 # Train
 train:
@@ -28,7 +29,9 @@ train:
   weight_decay: 0.0001
   epochs: 5
   scheduler: cosine
-  aug: light       # none | light | medium
+  aug: medical     # none | light | medium | medical
+  sampler: weighted  # none | weighted
+  class_weight: auto # none | auto (auto: N_total/(K*N_i) for i in class)
 
 # Misc
 seed: 42

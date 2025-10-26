@@ -3,14 +3,14 @@ from __future__ import annotations
 import argparse
 import os
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, random_split, WeightedRandomSampler
 from tqdm import tqdm
 import yaml
 
@@ -21,7 +21,47 @@ from losses import get_loss
 from utils import set_seed, get_device, ensure_dir, AverageMeter, compute_metrics, save_checkpoint, timestamp
 
 
-def build_dataloaders(cfg: Dict) -> Tuple[DataLoader, DataLoader]:
+def _extract_labels(ds) -> List[int]:
+    """Get labels list from CXRDataset or Subset[CXRDataset] without loading images."""
+    try:
+        from torch.utils.data import Subset
+        if isinstance(ds, Subset):
+            base = ds.dataset
+            idxs = ds.indices
+            if hasattr(base, "samples"):
+                return [int(base.samples[i].label) for i in idxs]
+            # fallback by indexing (may be slow)
+            return [int(base[i][1]) for i in idxs]
+        else:
+            if hasattr(ds, "samples"):
+                return [int(s.label) for s in ds.samples]
+            return [int(ds[i][1]) for i in range(len(ds))]
+    except Exception:
+        # extremely defensive fallback
+        return [int(ds[i][1]) for i in range(len(ds))]
+
+
+def _compute_class_weights(labels: List[int]) -> Tuple[Dict[int, float], float]:
+    """Compute class weights using N_total / (K * N_class_i) and pos_weight for BCE.
+
+    Returns:
+      (class_weight_map, pos_weight)
+    """
+    num_classes = 2
+    n_total = len(labels)
+    n_pos = sum(1 for x in labels if x == 1)
+    n_neg = n_total - n_pos
+    # avoid zero division
+    n_pos = max(1, n_pos)
+    n_neg = max(1, n_neg)
+    w_neg = n_total / (num_classes * n_neg)
+    w_pos = n_total / (num_classes * n_pos)
+    class_weight = {0: float(w_neg), 1: float(w_pos)}
+    pos_weight = float(n_neg) / float(n_pos)
+    return class_weight, pos_weight
+
+
+def build_dataloaders(cfg: Dict) -> Tuple[DataLoader, DataLoader, Dict[str, float], float]:
     image_root = cfg["data"].get("image_root")
     train_csv = cfg["data"].get("train_csv")
     val_csv = cfg["data"].get("val_csv")
@@ -56,9 +96,20 @@ def build_dataloaders(cfg: Dict) -> Tuple[DataLoader, DataLoader]:
         if hasattr(val_ds.dataset, "transform"):
             val_ds.dataset.transform = val_tfms
 
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
+    # compute class weights from TRAIN set only
+    labels = _extract_labels(train_ds)
+    class_weight_map, pos_weight = _compute_class_weights(labels)
+
+    # sampler: weighted to upsample rare class
+    sampler_cfg = cfg["train"].get("sampler", "none")
+    if str(sampler_cfg).lower() == "weighted":
+        sample_weights = [(class_weight_map[int(l)]) for l in labels]
+        sampler = WeightedRandomSampler(weights=sample_weights, num_samples=len(sample_weights), replacement=True)
+        train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=False, sampler=sampler, num_workers=num_workers, pin_memory=True)
+    else:
+        train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
-    return train_loader, val_loader
+    return train_loader, val_loader, class_weight_map, pos_weight
 
 
 def train_one_epoch(model: nn.Module, loader: DataLoader, criterion: nn.Module, optimizer, scaler, device: torch.device) -> float:
@@ -110,7 +161,7 @@ def main() -> None:
     set_seed(int(cfg.get("seed", 42)))
     device = get_device()
 
-    train_loader, val_loader = build_dataloaders(cfg)
+    train_loader, val_loader, class_weight_map, pos_weight = build_dataloaders(cfg)
 
     model = create_model(
         name=cfg["model"].get("name", "resnet18"),
@@ -118,7 +169,21 @@ def main() -> None:
         pretrained=bool(cfg["model"].get("pretrained", True)),
     ).to(device)
 
-    criterion = get_loss(cfg["loss"].get("name", "bce"), **cfg["loss"].get("params", {}))
+    # build loss with optional class weighting
+    loss_name = cfg["loss"].get("name", "bce").lower()
+    loss_params = dict(cfg["loss"].get("params", {}))
+    # auto weight setting controlled by train.class_weight
+    cw_cfg = str(cfg["train"].get("class_weight", "none")).lower()
+    if cw_cfg == "auto":
+        if loss_name in {"bce", "bcelogits", "bcewithlogits"}:
+            # BCEWithLogitsLoss: use pos_weight tensor
+            loss_params["pos_weight"] = torch.tensor([pos_weight], dtype=torch.float32, device=device)
+        elif loss_name in {"focal", "focalloss"}:
+            # FocalLoss: pass class weights [w_neg, w_pos]
+            loss_params["weight"] = torch.tensor([class_weight_map[0], class_weight_map[1]], dtype=torch.float32, device=device)
+            # and set default gamma=2 if not provided
+            loss_params.setdefault("gamma", 2.0)
+    criterion = get_loss(loss_name, **loss_params)
     optimizer = AdamW(model.parameters(), lr=float(cfg["train"].get("lr", 3e-4)), weight_decay=float(cfg["train"].get("weight_decay", 1e-4)))
     epochs = int(cfg["train"].get("epochs", 10))
     scheduler = CosineAnnealingLR(optimizer, T_max=epochs) if cfg["train"].get("scheduler", "cosine") == "cosine" else None
